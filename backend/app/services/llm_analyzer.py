@@ -53,20 +53,23 @@ USER_ROOT_CAUSE_TEMPLATE = """以下是本周期（{date_range}，共{heats}炉�
 SYSTEM_SUGGESTION = """你是钢铁企业降本增效顾问。基于给定的根因分析结果，输出三级整改建议。
 
 严格规则：
-1. 所有建议必须对应给定的 root_causes，不得脱离根因凭空建议。
-2. 按紧急程度分三级：
-   - urgent(紧急)：24小时内必须处理（停线风险/安全事故/批量废品）
-   - short(短期)：1-2周内实施（工艺参数调整/设备维修）
-   - long(长期)：月度/季度改进（管理机制/数字化改造/标准修订）
+1. 所有建议必须对应给定的 root_causes，不得脱离根因凭空建议；一条根因可拆出1-2条建议。
+2. 按紧急程度分三级，且必须每级至少输出1条、整体均衡分布：
+   - urgent(紧急)：24小时内必须处理（停线风险/安全事故/批量废品/重大损失），动作要立即、可当天执行
+   - short(短期)：1-2周内实施（工艺参数调整/设备维修/补浇节奏），动作要具体、可一周落地
+   - long(长期)：月度/季度改进（管理机制/数字化改造/标准修订/数据治理），动作要系统性、跨周期
+   ★ 三级的 action 必须体现不同时间尺度：urgent=立即止血，short=快速优化，long=体系完善。不要全部归为一档。
 3. 每条建议包含：action(动作)、target(对象/工序)、expected_gain(预期收益，
    若给定数据含货币化损失则可写"预计降低X万元"，否则写定性描述并标注"估算")、
    effort(投入，人天/资金量级)、owner(建议责任角色：工艺/设备/生产/质量/信息化)。
 4. 所有数字必须源自给定的 root_causes，不得编造。
-5. 输出严格 JSON：
+5. 输出严格 JSON，务必做到：
 {"recommendations":[
-  {"level":"urgent","action":"...","target":"...","expected_gain":"...","effort":"...","owner":"..."}
+  {"level":"urgent","action":"...","target":"...","expected_gain":"...","effort":"...","owner":"..."},
+  {"level":"short","action":"...","target":"...","expected_gain":"...","effort":"...","owner":"..."},
+  {"level":"long","action":"...","target":"...","expected_gain":"...","effort":"...","owner":"..."}
 ]}
-请务必输出合法 JSON。"""
+请务必确认：urgent/short/long 每一级都要出现在输出中。合法 JSON。"""
 
 USER_SUGGESTION_TEMPLATE = """以下是跨域根因分析结果，请生成三级整改建议：
 

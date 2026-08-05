@@ -244,7 +244,8 @@ async function runDiagnosis() {
   loading.value = true
   rcErr.value = ''
   try {
-    const res = await http.post('/ai/reason', null, { params: { domain: domain.value } })
+    // LLM 根因推理较慢(偶发>30s)，单独放宽超时到 180s
+    const res = await http.post('/ai/reason', null, { params: { domain: domain.value }, timeout: 180000 })
     rc.value = res
     tab.value = 'reason'
   } catch (e) {
@@ -258,7 +259,8 @@ async function runDiagnosis() {
 async function generateReport() {
   loading.value = true
   try {
-    await http.post('/ai/report/generate', null, { params: { domain: domain.value, include_llm: true } })
+    // 报告需根因+建议两步 LLM 串联，更慢，放宽到 300s
+    await http.post('/ai/report/generate', null, { params: { domain: domain.value, include_llm: true }, timeout: 300000 })
     await loadReports(true)
     tab.value = 'report'
   } catch (e) {

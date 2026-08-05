@@ -1,0 +1,55 @@
+// demandAI 模板配色（浅色科技蓝商务风）-- v2 架构专用
+// 变量放 :root 全局可用，.v2-app 设基础样式
+:root {
+  --v2-primary: #0284C7;
+  --v2-primary-dark: #0369A1;
+  --v2-primary-light: #E0F2FE;
+  --v2-primary-50: #F0F9FF;
+  --v2-primary-200: #BAE6FD;
+  --v2-bg-body: #F8FAFC;
+  --v2-bg-card: #FFFFFF;
+  --v2-bg-subtle: #F1F5F9;
+  --v2-text: #0F172A;
+  --v2-text-2: #475569;
+  --v2-text-muted: #94A3B8;
+  --v2-border: #E2E8F0;
+  --v2-border-light: #F1F5F9;
+  --v2-border-strong: #CBD5E1;
+  --v2-rail: #131E32;
+  --v2-dark-800: #1E293B;
+  --v2-dark-900: #0F172A;
+  --v2-success: #10B981;
+  --v2-success-text: #047857;
+  --v2-success-bg: #ECFDF5;
+  --v2-warning: #F59E0B;
+  --v2-warning-text: #D97706;
+  --v2-warning-bg: #FFFBEB;
+  --v2-danger: #DC2626;
+  --v2-danger-text: #B91C1C;
+  --v2-danger-bg: #FEF2F2;
+  --v2-grad: linear-gradient(135deg, #0284C7, #0369A1);
+  --v2-grad-progress: linear-gradient(90deg, #0284C7, #38BDF8);
+  --v2-grad-modal: linear-gradient(135deg, #0F172A 0%, #1E293B 60%, #0369A1 100%);
+  --v2-overlay: rgba(15, 23, 42, 0.65);
+  --v2-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --v2-shadow-hover: 0 8px 20px rgba(0, 0, 0, 0.06);
+  --v2-shadow-primary: 0 4px 12px rgba(2, 132, 199, 0.4);
+  --v2-shadow-modal: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --v2-radius: 14px;
+  --v2-radius-sm: 8px;
+  --v2-radius-xl: 18px;
+}
+
+.v2-app {
+  background: var(--v2-bg-body);
+  color: var(--v2-text);
+  font-family: "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
+  min-height: 100vh;
+
+  .pass-good { color: var(--v2-success-text); }
+  .pass-warn { color: var(--v2-warning-text); }
+  .pass-bad { color: var(--v2-danger-text); }
+  .section-hint { color: var(--v2-text-muted); font-size: 0.82rem; }
+  .empty { color: var(--v2-text-muted); text-align: center; padding: 2rem; }
+  .mono { font-family: ui-monospace, monospace; color: var(--v2-primary-dark); font-weight: 600; }
+}

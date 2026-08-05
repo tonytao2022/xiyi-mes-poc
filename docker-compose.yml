@@ -1,0 +1,52 @@
+services:
+  db:
+    image: postgres:15
+    container_name: mespoc-db
+    environment:
+      POSTGRES_USER: mes
+      POSTGRES_PASSWORD: mes
+      POSTGRES_DB: mespoc
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mes -d mespoc"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    container_name: mespoc-backend
+    ports:
+      - "8003:8000"
+    volumes:
+      - ./backend:/app
+      - ./docs:/app/docs:ro
+    environment:
+      DATABASE_URL: postgresql://mes:mes@db:5432/mespoc
+      CORS_ORIGINS: http://localhost:5176,http://localhost
+    depends_on:
+      db:
+        condition: service_healthy
+    # 开发热重载
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build: ./frontend
+    container_name: mespoc-frontend
+    ports:
+      - "5176:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      # vite proxy 转发 /api 到后端容器（容器间用服务名）
+      API_TARGET: http://backend:8000
+    depends_on:
+      - backend
+    command: npm run dev -- --host 0.0.0.0
+
+volumes:
+  pgdata:

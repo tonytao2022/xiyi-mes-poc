@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SWRCH22A 冷镦钢线材质检数据分析报告</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+    background: #f0f2f5;
+    color: #333;
+    line-height: 1.8;
+    padding: 20px;
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+  .header {
+    background: linear-gradient(135deg, #1a3a5c, #2d6dad);
+    color: white;
+    padding: 40px 30px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  }
+  .header h1 { font-size: 28px; margin-bottom: 8px; }
+  .header .meta { font-size: 14px; opacity: 0.85; }
+  .header .badge {
+    display: inline-block; background: rgba(255,255,255,0.2);
+    padding: 4px 12px; border-radius: 20px; font-size: 13px; margin-top: 10px;
+  }
+  .section {
+    background: white; border-radius: 10px; padding: 28px;
+    margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .section h2 {
+    font-size: 20px; color: #1a3a5c; border-left: 4px solid #2d6dad;
+    padding-left: 12px; margin-bottom: 18px;
+  }
+  .section h3 { font-size: 16px; color: #555; margin: 16px 0 10px; }
+  .summary-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px; margin-bottom: 20px;
+  }
+  .stat-card {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-radius: 8px; padding: 18px; text-align: center;
+    border: 1px solid #e0e0e0;
+  }
+  .stat-card .value { font-size: 28px; font-weight: bold; color: #2d6dad; }
+  .stat-card .label { font-size: 13px; color: #666; margin-top: 4px; }
+  .stat-card .unit { font-size: 14px; color: #888; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+  th { background: #2d6dad; color: white; padding: 10px 12px; text-align: left; font-weight: 600; }
+  td { padding: 8px 12px; border-bottom: 1px solid #e0e0e0; }
+  tr:nth-child(even) { background: #f8f9fa; }
+  tr:hover { background: #e3f2fd; }
+  .chart-box { text-align: center; margin: 20px 0; }
+  .chart-box img { max-width: 100%; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+  .chart-caption { font-size: 12px; color: #888; margin-top: 6px; }
+  .highlight-box {
+    background: #fff3cd; border-left: 4px solid #ffc107;
+    padding: 16px 20px; border-radius: 6px; margin: 16px 0;
+  }
+  .success-box {
+    background: #d4edda; border-left: 4px solid #28a745;
+    padding: 16px 20px; border-radius: 6px; margin: 16px 0;
+  }
+  .warning-box {
+    background: #f8d7da; border-left: 4px solid #dc3545;
+    padding: 16px 20px; border-radius: 6px; margin: 16px 0;
+  }
+  .info-box {
+    background: #d1ecf1; border-left: 4px solid #17a2b8;
+    padding: 16px 20px; border-radius: 6px; margin: 16px 0;
+  }
+  .recommendation-list { list-style: none; counter-reset: rec; }
+  .recommendation-list li {
+    counter-increment: rec; position: relative;
+    padding: 12px 16px 12px 50px; margin-bottom: 10px;
+    background: #f8f9fa; border-radius: 8px; border-left: 3px solid #2d6dad;
+  }
+  .recommendation-list li::before {
+    content: counter(rec); position: absolute; left: 12px; top: 50%;
+    transform: translateY(-50%); width: 28px; height: 28px;
+    background: #2d6dad; color: white; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: bold; font-size: 14px;
+  }
+  .footer {
+    text-align: center; padding: 20px; color: #888; font-size: 12px;
+    margin-top: 20px;
+  }
+  .tag { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+  .tag-green { background: #d4edda; color: #155724; }
+  .tag-orange { background: #fff3cd; color: #856404; }
+  .tag-red { background: #f8d7da; color: #721c24; }
+  .tag-blue { background: #d1ecf1; color: #0c5460; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- Header -->
+<div class="header">
+  <h1>SWRCH22A 冷镦钢线材质检数据分析报告</h1>
+  <div class="meta">
+    标准依据：JIS G 3507-1:2021 &nbsp;|&nbsp; 生产时间：2026-05-29 ~ 2026-05-31<br>
+    分析生成时间：2026-07-09 &nbsp;|&nbsp; 数据来源：SWRCH22A.xls
+  </div>
+  <div class="badge">牌号：SWRCH22A-1G</div>
+  <div class="badge">规格：Φ6.5mm</div>
+  <div class="badge">冶金规范码：D00024</div>
+</div>
+
+<!-- 1. 数据概览 -->
+<div class="section">
+  <h2>一、数据概览</h2>
+  <p>本报告基于 SWRCH22A.xls 文件，涵盖该牌号冷镦钢线材生产全流程的质检与工艺数据，共包含 <strong>5 个数据表</strong>，统计如下：</p>
+
+  <div class="summary-grid">
+    <div class="stat-card">
+      <div class="value">9</div>
+      <div class="label">熔炼号数量</div>
+    </div>
+    <div class="stat-card">
+      <div class="value">25</div>
+      <div class="label">炉批号/试批号</div>
+    </div>
+    <div class="stat-card">
+      <div class="value">910</div>
+      <div class="label">加热工艺记录</div>
+    </div>
+    <div class="stat-card">
+      <div class="value">881</div>
+      <div class="label">轧制工艺记录</div>
+    </div>
+    <div class="stat-card">
+      <div class="value">50</div>
+      <div class="label">力学性能检测试样</div>
+    </div>
+    <div class="stat-card">
+      <div class="value">47</div>
+      <div class="label">产品尺寸检验批次</div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>数据表</th>
+        <th>数据量</th>
+        <th>核心字段</th>
+        <th>说明</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>力学性能及化学成分</td>
+        <td>50条 × 59列</td>
+        <td>屈服强度、抗拉强度、断后伸长率、屈强比、C/Si/Mn/P/S等</td>
+        <td>每个试批号2个试样的力学性能和化学成分检测数据</td>
+      </tr>
+      <tr>
+        <td>加热工艺</td>
+        <td>910条 × 29列</td>
+        <td>入炉/出炉温度、加热时间、预热/加热/均热段温度等</td>
+        <td>逐支钢坯的加热炉工艺实绩记录</td>
+      </tr>
+      <tr>
+        <td>轧制工艺</td>
+        <td>881条 × 31列</td>
+        <td>开轧/终轧/吐丝温度、A/B/C级命中率等</td>
+        <td>逐支轧件的轧制温度和命中率实绩</td>
+      </tr>
+      <tr>
+        <td>产品尺寸</td>
+        <td>47条 × 58列</td>
+        <td>对角线直径、弯曲度、外形/表面/包装/标识/酸洗/冷镦质量</td>
+        <td>逐批产品的尺寸外形及质量判定</td>
+      </tr>
+      <tr>
+        <td>熔炼号关系表</td>
+        <td>25条 × 3列</td>
+        <td>炉批号、试批号、熔炼号</td>
+        <td>建立熔炼号→炉批号→试批号的追溯关系</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 2. 力学性能分析 -->
+<div class="section">
+  <h2>二、力学性能分析</h2>
+
+  <div class="success-box">
+    <strong>✅ 性能合格率：100%</strong> — 全部50个试样的性能判定结果均为"合格"，无一异常。
+  </div>
+
+  <h3>2.1 关键力学性能统计</h3>
+  <table>
+    <thead>
+      <tr><th>性能指标</th><th>均值</th><th>标准差</th><th>最小值</th><th>最大值</th><th>中位数</th><th>极差</th><th>变异系数</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>屈服强度 (MPa)</td><td>302.00</td><td>9.12</td><td>286.00</td><td>325.00</td><td>301.00</td><td>39.00</td><td>3.02%</td></tr>
+      <tr><td>抗拉强度 (MPa)</td><td>478.76</td><td>8.41</td><td>461.00</td><td>500.00</td><td>478.00</td><td>39.00</td><td>1.76%</td></tr>
+      <tr><td>断后伸长率 (%)</td><td>36.97</td><td>1.38</td><td>35.00</td><td>40.50</td><td>37.00</td><td>5.50</td><td>3.73%</td></tr>
+      <tr><td>屈强比</td><td>0.63</td><td>0.02</td><td>0.59</td><td>0.67</td><td>0.63</td><td>0.08</td><td>3.17%</td></tr>
+      <tr><td>断缩率 (%)</td><td>64.92</td><td>2.21</td><td>60.00</td><td>70.00</td><td>65.00</td><td>10.00</td><td>3.40%</td></tr>
+    </tbody>
+  </table>
+
+  <div class="info-box">
+    <strong>📊 解读：</strong>屈强比均值0.63，处于较低水平，说明材料具有较好的塑性储备和冷镦成型性能。
+    抗拉强度变异系数仅1.76%，批次间一致性优秀。断后伸长率均值36.97%，表明材料延展性良好，适合冷镦加工。
+  </div>
+
+  <div class="chart-box">
+    <img src="analysis_charts/01_mechanical_properties.png" alt="力学性能分布">
+    <div class="chart-caption">图1：四项关键力学性能指标分布直方图</div>
+  </div>
+
+  <h3>2.2 各熔炼号力学性能对比</h3>
+  <div class="chart-box">
+    <img src="analysis_charts/07_strength_by_heat.png" alt="各熔炼号强度对比">
+    <div class="chart-caption">图2：9个熔炼号的屈服强度与抗拉强度对比</div>
+  </div>
+
+  <div class="highlight-box">
+    <strong>⚠️ 关注点：</strong>各熔炼号间屈服强度波动范围 286~325 MPa，最大极差 39 MPa。
+    建议关注熔炼号 <strong>26BD04870</strong>（均值偏高）和 <strong>26BD04863</strong>（波动较大）的工艺稳定性。
+  </div>
+</div>
+
+<!-- 3. 化学成分分析 -->
+<div class="section">
+  <h2>三、化学成分分析</h2>
+
+  <h3>3.1 主要化学成分统计</h3>
+  <table>
+    <thead>
+      <tr><th>元素</th><th>均值 (%)</th><th>标准差 (%)</th><th>最小值 (%)</th><th>最大值 (%)</th><th>JIS标准要求</th><th>符合性</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>C</td><td>0.1994</td><td>0.0036</td><td>0.1924</td><td>0.2034</td><td>0.18~0.23</td><td><span class="tag tag-green">合格</span></td></tr>
+      <tr><td>Si</td><td>0.0307</td><td>0.0037</td><td>0.0253</td><td>0.0351</td><td>≤0.10</td><td><span class="tag tag-green">合格</span></td></tr>
+      <tr><td>Mn</td><td>0.7544</td><td>0.0195</td><td>0.7324</td><td>0.7977</td><td>0.60~0.90</td><td><span class="tag tag-green">合格</span></td></tr>
+      <tr><td>P</td><td>0.0123</td><td>0.0012</td><td>0.0108</td><td>0.0146</td><td>≤0.030</td><td><span class="tag tag-green">合格</span></td></tr>
+      <tr><td>S</td><td>0.0036</td><td>0.0007</td><td>0.0026</td><td>0.0051</td><td>≤0.035</td><td><span class="tag tag-green">合格</span></td></tr>
+      <tr><td>Cr</td><td>0.0300</td><td>0.0041</td><td>0.0212</td><td>0.0357</td><td>—</td><td><span class="tag tag-blue">参考</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="success-box">
+    <strong>✅ 化学成分全部合格。</strong>所有元素含量均在 JIS G 3507-1:2021 标准范围内，且余量充足。
+    特别是 P（均值0.0123%，标准上限0.030%）和 S（均值0.0036%，标准上限0.035%）的控制非常出色，
+    远低于标准上限，有利于冷镦性能。
+  </div>
+
+  <div class="chart-box">
+    <img src="analysis_charts/02_chemical_composition.png" alt="化学成分统计">
+    <div class="chart-caption">图3：主要化学成分含量统计（均值±标准差）</div>
+  </div>
+
+  <h3>3.2 各熔炼号化学成分分布</h3>
+  <div class="chart-box">
+    <img src="analysis_charts/03_chem_by_heat.png" alt="各熔炼号化学成分分布">
+    <div class="chart-caption">图4：6种关键元素在各熔炼号中的分布箱线图</div>
+  </div>
+
+  <h3>3.3 碳当量(Ceq)分析</h3>
+  <div class="chart-box">
+    <img src="analysis_charts/09_ceq_by_heat.png" alt="碳当量分布">
+    <div class="chart-caption">图5：各熔炼号碳当量(Ceq)分布</div>
+  </div>
+</div>
+
+<!-- 4. 加热工艺分析 -->
+<div class="section">
+  <h2>四、加热工艺分析</h2>
+  <p>共统计 <strong>910 条</strong> 加热炉实绩记录，涵盖9个熔炼号的全部钢坯。</p>
+
+  <h3>4.1 加热工艺参数统计</h3>
+  <table>
+    <thead>
+      <tr><th>工艺参数</th><th>均值</th><th>标准差</th><th>最小值</th><th>最大值</th><th>单位</th><th>稳定性评价</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>出炉温度</td><td>974.23</td><td>65.59</td><td>—</td><td>1011</td><td>°C</td><td><span class="tag tag-orange">一般</span></td></tr>
+      <tr><td>总加热时间</td><td>165.96</td><td>24.91</td><td>127.47</td><td>212.60</td><td>min</td><td><span class="tag tag-orange">一般</span></td></tr>
+      <tr><td>预热段温度</td><td>711.85</td><td>34.36</td><td>587</td><td>792</td><td>°C</td><td><span class="tag tag-green">稳定</span></td></tr>
+      <tr><td>加热段温度</td><td>1048.65</td><td>64.64</td><td>—</td><td>1085</td><td>°C</td><td><span class="tag tag-orange">一般</span></td></tr>
+      <tr><td>均热温度</td><td>1061.61</td><td>71.88</td><td>—</td><td>1087</td><td>°C</td><td><span class="tag tag-orange">一般</span></td></tr>
+      <tr><td>烟气外排温度</td><td>183.08</td><td>31.32</td><td>—</td><td>204</td><td>°C</td><td><span class="tag tag-green">稳定</span></td></tr>
+      <tr><td>热风温度</td><td>361.89</td><td>83.03</td><td>—</td><td>402</td><td>°C</td><td><span class="tag tag-red">波动大</span></td></tr>
+      <tr><td>炉膛压力</td><td>13.19</td><td>2.45</td><td>-1</td><td>30</td><td>Pa</td><td><span class="tag tag-green">稳定</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="warning-box">
+    <strong>⚠️ 注意：</strong>部分数据存在 0 值（如入炉温度、出炉温度出现 0），可能为传感器故障或数据采集异常，
+    建议核查数据采集系统的完整性。
+  </div>
+
+  <div class="chart-box">
+    <img src="analysis_charts/06_heating_process.png" alt="加热工艺趋势">
+    <div class="chart-caption">图6：出炉温度、总加热时间、均热温度、炉膛压力的趋势图</div>
+  </div>
+</div>
+
+<!-- 5. 轧制工艺分析 -->
+<div class="section">
+  <h2>五、轧制工艺分析</h2>
+  <p>共统计 <strong>881 条</strong> 轧制实绩记录。</p>
+
+  <h3>5.1 轧制温度曲线</h3>
+  <div class="chart-box">
+    <img src="analysis_charts/04_rolling_temperature.png" alt="轧制温度曲线">
+    <div class="chart-caption">图7：从开轧到上冷床各工序温度变化曲线（均值±标准差）</div>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>温度节点</th><th>均值 (°C)</th><th>标准差</th><th>最小值</th><th>最大值</th><th>降温幅度</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>开轧温度</td><td>974</td><td>66.65</td><td>—</td><td>1011</td><td>—</td></tr>
+      <tr><td>2号剪温度</td><td>993</td><td>75.55</td><td>—</td><td>1032</td><td>+19°C</td></tr>
+      <tr><td>进精轧温度</td><td>912</td><td>70.01</td><td>—</td><td>963</td><td>-81°C</td></tr>
+      <tr><td>进减径温度</td><td>887</td><td>68.39</td><td>—</td><td>942</td><td>-25°C</td></tr>
+      <tr><td>终轧温度</td><td>854</td><td>64.95</td><td>—</td><td>902</td><td>-33°C</td></tr>
+      <tr><td>吐丝温度</td><td>872</td><td>59.45</td><td>—</td><td>923</td><td>+18°C</td></tr>
+      <tr><td>上冷床温度</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+    </tbody>
+  </table>
+
+  <div class="info-box">
+    <strong>📊 解读：</strong>轧制温度从开轧 ~974°C 逐步降至终轧 ~854°C，温降合理。
+    终轧温度控制在 850~870°C 区间，吐丝温度约 872°C，有利于获得良好的奥氏体晶粒度和组织均匀性。
+  </div>
+
+  <h3>5.2 命中率分析</h3>
+  <div class="chart-box">
+    <img src="analysis_charts/05_hit_rate.png" alt="命中率分布">
+    <div class="chart-caption">图8：A/B/C级命中率分布直方图</div>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>命中率指标</th><th>均值 (%)</th><th>标准差</th><th>最小值 (%)</th><th>最大值 (%)</th><th>评价</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>A级命中率</td><td>99.64</td><td>0.60</td><td>96.28</td><td>100.00</td><td><span class="tag tag-green">优秀</span></td></tr>
+      <tr><td>B级命中率</td><td>99.63</td><td>0.64</td><td>93.02</td><td>100.00</td><td><span class="tag tag-green">优秀</span></td></tr>
+      <tr><td>C级命中率</td><td>98.69</td><td>4.60</td><td>47.12</td><td>100.00</td><td><span class="tag tag-orange">需关注</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="warning-box">
+    <strong>⚠️ 重点关注：</strong>C级命中率最低值仅 47.12%，标准差达 4.60%，波动较大。
+    虽然均值 98.69% 尚可，但存在部分批次C级命中率显著偏低的异常情况，需排查对应轧制批次的工艺参数异常。
+  </div>
+</div>
+
+<!-- 6. 产品尺寸与质量 -->
+<div class="section">
+  <h2>六、产品尺寸与外观质量</h2>
+
+  <div class="success-box">
+    <strong>✅ 尺寸与质量合格率：100%</strong> — 全部47批产品的尺寸外形抽查结果均为"合格"，是否符合标准均为"符合"。
+  </div>
+
+  <h3>6.1 尺寸测量统计</h3>
+  <table>
+    <thead>
+      <tr><th>测量项</th><th>均值 (mm)</th><th>标准差</th><th>最小值</th><th>最大值</th><th>公差范围</th><th>符合性</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>内径对角线1</td><td>6.459</td><td>0.031</td><td>6.420</td><td>6.530</td><td>6.5±0.15</td><td><span class="tag tag-green">合格</span></td></tr>
+      <tr><td>内径对角线2</td><td>6.624</td><td>0.018</td><td>6.590</td><td>6.660</td><td>6.5±0.15</td><td><span class="tag tag-green">合格</span></td></tr>
+      <tr><td>对角线差值</td><td>0.165</td><td>0.036</td><td>0.080</td><td>0.240</td><td>≤0.30</td><td><span class="tag tag-green">合格</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="chart-box">
+    <img src="analysis_charts/08_dimensions.png" alt="产品尺寸">
+    <div class="chart-caption">图9：对角线直径测量值散点图（含公差带）</div>
+  </div>
+
+  <h3>6.2 质量判定汇总</h3>
+  <table>
+    <thead>
+      <tr><th>质量项</th><th>合格批次</th><th>总批次</th><th>合格率</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>尺寸外形抽查</td><td>47</td><td>47</td><td>100%</td></tr>
+      <tr><td>外形质量</td><td>47</td><td>47</td><td>100%</td></tr>
+      <tr><td>表面质量</td><td>47</td><td>47</td><td>100%</td></tr>
+      <tr><td>包装质量</td><td>47</td><td>47</td><td>100%</td></tr>
+      <tr><td>标识质量</td><td>47</td><td>47</td><td>100%</td></tr>
+      <tr><td>酸洗质量</td><td>47</td><td>47</td><td>100%</td></tr>
+      <tr><td>冷镦质量</td><td>—</td><td>47</td><td><span class="tag tag-orange">1/5合格</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="highlight-box">
+    <strong>⚠️ 冷镦质量关注：</strong>所有47批的冷镦质量标注为"1/5合格"，即每5个冷镦试样中1个合格。
+    虽然最终产品判定为"符合标准"，但此比例偏低，建议进一步核实冷镦试验的判定标准和试样制备条件。
+  </div>
+</div>
+
+<!-- 7. 综合评价 -->
+<div class="section">
+  <h2>七、综合评价与业务建议</h2>
+
+  <h3>7.1 总体评价</h3>
+  <table>
+    <thead>
+      <tr><th>评价维度</th><th>评分</th><th>说明</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>力学性能</td>
+        <td><span class="tag tag-green">★★★★★</span></td>
+        <td>100%合格，强度波动小（CV<3%），屈强比低，冷镦性能优良</td>
+      </tr>
+      <tr>
+        <td>化学成分</td>
+        <td><span class="tag tag-green">★★★★★</span></td>
+        <td>全部元素符合JIS标准，P/S控制远低于上限，成分波动极小</td>
+      </tr>
+      <tr>
+        <td>加热工艺</td>
+        <td><span class="tag tag-orange">★★★★☆</span></td>
+        <td>核心参数基本稳定，但热风温度波动大，存在0值异常数据</td>
+      </tr>
+      <tr>
+        <td>轧制工艺</td>
+        <td><span class="tag tag-orange">★★★★☆</span></td>
+        <td>A/B级命中率优秀，C级命中率波动大需关注</td>
+      </tr>
+      <tr>
+        <td>产品尺寸</td>
+        <td><span class="tag tag-green">★★★★★</span></td>
+        <td>100%合格，尺寸精度高，对角线差值控制良好</td>
+      </tr>
+      <tr>
+        <td>外观质量</td>
+        <td><span class="tag tag-green">★★★★☆</span></td>
+        <td>外形/表面/包装/标识/酸洗全部合格；冷镦质量1/5合格需跟进</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>7.2 业务建议</h3>
+  <ol class="recommendation-list">
+    <li>
+      <strong>排查C级命中率异常批次：</strong>C级命中率最低47.12%，标准差4.60%。建议调取命中率低于90%的轧制批次，
+      对照其加热温度、轧制速度、冷却工艺等参数，定位波动根因。重点关注开轧温度为0的异常记录是否为传感器故障。
+    </li>
+    <li>
+      <strong>核实冷镦质量"1/5合格"判定标准：</strong>该标注可能反映冷镦试验的抽样比例或判定规则，
+      而非实际不合格率。建议与质检部门确认：(a) 是否为5个试样中1个判定合格的抽样规则？
+      (b) 是否存在冷镦开裂风险？如有，需追溯到对应炉批的夹杂物控制和脱碳层深度。
+    </li>
+    <li>
+      <strong>加强加热炉热风温度稳定性控制：</strong>热风温度标准差达83.03°C（均值361.89°C），
+      波动过大将影响燃烧效率和加热均匀性。建议检查换热器运行状态、煤气热值波动情况，
+      并优化空燃比控制策略，将热风温度波动控制在±30°C以内。
+    </li>
+    <li>
+      <strong>清洗加热/轧制工艺中的异常0值数据：</strong>部分入炉温度、出炉温度、轧制温度存在0值记录，
+      建议排查数据采集系统（PLC/传感器/通讯链路）是否存在间歇性故障，建立数据有效性自动校验机制，
+      避免异常数据干扰工艺分析。
+    </li>
+    <li>
+      <strong>保持P/S元素控制的优秀水平：</strong>当前P均值0.0123%、S均值0.0036%，
+      远低于JIS标准上限，是冷镦性能优良的关键因素。建议将当前冶炼工艺参数固化形成标准化操作规程（SOP），
+      作为SWRCH22A系列的标杆工艺。
+    </li>
+  </ol>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <p>本报告由析数数（数据分析专家）自动生成 | 数据源：SWRCH22A.xls | 生成日期：2026-07-09</p>
+  <p>报告仅基于所提供数据进行分析，不构成商业决策依据。如需深入分析特定批次或指标，请联系质检部门。</p>
+</div>
+
+</div>
+</body>
+</html>

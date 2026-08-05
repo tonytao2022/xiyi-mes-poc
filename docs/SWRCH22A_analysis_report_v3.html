@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>SWRCH22A 数据分析报告 · Enhanced</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+
+:root{
+--bg:#0a0e1a;--glass:rgba(255,255,255,0.05);--glass2:rgba(255,255,255,0.08);
+--border:rgba(255,255,255,0.1);--text:#e2e8f0;--dim:#94a3b8;
+--accent:#60a5fa;--accent2:#a78bfa;--green:#34d399;--red:#f87171;--yellow:#fbbf24;
+--radius:16px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden;}
+
+/* Particle Canvas */
+#particles-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;}
+
+/* Original background overlay */
+body::before{content:'';position:fixed;inset:0;
+background:radial-gradient(ellipse at 20% 20%,rgba(96,165,250,0.07),transparent 50%),
+radial-gradient(ellipse at 80% 80%,rgba(167,139,250,0.05),transparent 50%);
+pointer-events:none;z-index:0;}
+
+/* Navbar */
+.nav{position:sticky;top:0;z-index:100;background:rgba(10,14,26,0.92);backdrop-filter:blur(20px);
+border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;
+justify-content:space-between;height:60px;flex-wrap:wrap;transition:all 0.3s ease;}
+.nav .logo{font-size:1.2rem;font-weight:800;
+background:linear-gradient(135deg,var(--accent),var(--accent2),var(--accent),#f0abfc);
+background-size:300% 300%;
+-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+animation:gradientShift 4s ease infinite;}
+
+@keyframes gradientShift{
+0%{background-position:0% 50%;}
+50%{background-position:100% 50%;}
+100%{background-position:0% 50%;}
+}
+
+.nav nav{display:flex;gap:2px;flex-wrap:wrap;}
+.nav nav a{color:var(--dim);text-decoration:none;font-size:0.78rem;padding:6px 10px;border-radius:8px;
+transition:all .3s ease;position:relative;}
+.nav nav a:hover{color:var(--text);background:var(--glass);}
+.nav nav a.active{color:var(--accent);background:rgba(96,165,250,0.1);}
+.nav nav a.active::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+width:60%;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;}
+
+/* Main */
+.main{max-width:1440px;margin:0 auto;padding:2rem 1.5rem;position:relative;z-index:1;}
+
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:2rem;}
+.kpi{background:var(--glass);border:1px solid var(--border);border-radius:var(--radius);
+padding:1.2rem;text-align:center;backdrop-filter:blur(12px);
+transition:transform .3s ease,box-shadow .3s ease,border-color .3s ease;
+opacity:0;transform:translateY(20px);animation:fadeInUp 0.6s ease forwards;}
+.kpi:nth-child(1){animation-delay:0.1s;}
+.kpi:nth-child(2){animation-delay:0.2s;}
+.kpi:nth-child(3){animation-delay:0.3s;}
+.kpi:nth-child(4){animation-delay:0.4s;}
+.kpi:nth-child(5){animation-delay:0.5s;}
+.kpi:nth-child(6){animation-delay:0.6s;}
+
+.kpi:hover{transform:translateY(-6px) scale(1.02);
+box-shadow:0 8px 40px rgba(96,165,250,0.2),0 0 20px rgba(167,139,250,0.1);
+border-color:rgba(96,165,250,0.4);}
+.kpi .icon{font-size:1.6rem;margin-bottom:4px;}
+.kpi .val{font-size:1.7rem;font-weight:800;color:var(--accent);
+text-shadow:0 0 20px rgba(96,165,250,0.3);}
+.kpi .lbl{font-size:0.75rem;color:var(--dim);margin-top:2px;}
+
+/* Section */
+.sec{background:var(--glass);border:1px solid var(--border);border-radius:var(--radius);
+padding:2rem;margin-bottom:2rem;backdrop-filter:blur(12px);
+transition:border-color .3s ease,box-shadow .3s ease;
+opacity:0;transform:translateY(40px);transition:opacity 0.8s ease,transform 0.8s ease,
+border-color .3s ease,box-shadow .3s ease;}
+.sec.visible{opacity:1;transform:translateY(0);}
+.sec:hover{border-color:rgba(96,165,250,0.3);
+box-shadow:0 4px 30px rgba(96,165,250,0.08);}
+
+.sec-title{font-size:1.3rem;font-weight:700;margin-bottom:1.2rem;padding-bottom:0.6rem;
+border-bottom:1px solid var(--border);position:relative;}
+.sec-title::after{content:'';position:absolute;bottom:-1px;left:0;width:0;height:2px;
+background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width 0.6s ease;}
+.sec.visible .sec-title::after{width:100%;}
+.sec-title .ic{margin-right:8px;}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:1.5rem;}
+.stat{background:var(--glass2);border:1px solid var(--border);border-radius:12px;padding:1rem 1.2rem;
+transition:transform .3s ease,box-shadow .3s ease,border-color .3s ease;}
+.stat:hover{transform:translateY(-3px);box-shadow:0 6px 24px rgba(96,165,250,0.1);
+border-color:rgba(96,165,250,0.3);}
+.stat .lbl{font-size:0.82rem;color:var(--accent);font-weight:600;margin-bottom:6px;}
+.stat .row{display:flex;justify-content:space-between;font-size:0.8rem;padding:2px 0;}
+.stat .v{color:var(--green);font-weight:600;}
+.stat .v.big{font-size:1.4rem;color:var(--accent);text-shadow:0 0 15px rgba(96,165,250,0.2);}
+
+/* Progress bar in stat */
+.stat .progress-bar{height:4px;background:rgba(255,255,255,0.08);border-radius:4px;
+margin-top:8px;overflow:hidden;}
+.stat .progress-bar .fill{height:100%;border-radius:4px;width:0;
+background:linear-gradient(90deg,var(--accent),var(--accent2));
+transition:width 1.2s cubic-bezier(0.4,0,0.2,1);}
+.stat.visible .progress-bar .fill{width:var(--progress,50%);}
+
+/* Charts */
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:1.2rem;margin-bottom:1rem;}
+.chart{background:var(--glass2);border:1px solid var(--border);border-radius:12px;padding:1.2rem;
+opacity:0;transform:translateY(30px);transition:opacity 0.7s ease,transform 0.7s ease,
+border-color .3s ease,box-shadow .3s ease;}
+.chart.visible{opacity:1;transform:translateY(0);}
+.chart:hover{border-color:rgba(167,139,250,0.3);box-shadow:0 4px 24px rgba(167,139,250,0.1);}
+.chart h3{font-size:0.9rem;color:var(--dim);margin-bottom:0.8rem;font-weight:500;}
+.chart.full{grid-column:1/-1;}
+
+/* Table */
+.tbl-wrap{overflow-x:auto;margin-top:1rem;}
+.tbl-wrap h3{font-size:0.9rem;color:var(--dim);margin-bottom:0.6rem;font-weight:500;}
+table{width:100%;border-collapse:collapse;font-size:0.78rem;}
+th{background:rgba(96,165,250,0.1);color:var(--accent);padding:8px 10px;text-align:left;
+white-space:nowrap;border-bottom:1px solid var(--border);}
+td{padding:6px 10px;border-bottom:1px solid rgba(255,255,255,0.04);
+transition:background .2s ease;}
+tr{position:relative;transition:all .2s ease;}
+tr::before{content:'';position:absolute;left:0;top:0;bottom:0;width:0;
+background:linear-gradient(180deg,var(--accent),var(--accent2));
+transition:width .3s ease;border-radius:0 2px 2px 0;}
+tr:hover::before{width:3px;}
+tr:hover td{background:rgba(96,165,250,0.05);}
+.mono{font-family:monospace;color:var(--accent2);font-weight:600;}
+.scroll-x{min-width:900px;}
+
+/* Insights */
+.insights h3{font-size:1rem;margin-bottom:0.8rem;color:var(--accent);}
+.ib{margin-bottom:1.2rem;padding-left:1rem;border-left:3px solid transparent;
+opacity:0;transform:translateX(-20px);transition:opacity 0.6s ease,transform 0.6s ease,
+border-color .3s ease;}
+.ib.visible{opacity:1;transform:translateX(0);}
+.ib:nth-child(2){border-left-color:var(--accent);}
+.ib:nth-child(3){border-left-color:var(--accent2);}
+.ib:nth-child(4){border-left-color:var(--green);}
+.ib:nth-child(5){border-left-color:var(--yellow);}
+.ib h4{font-size:0.9rem;color:var(--accent2);margin-bottom:6px;}
+.ii{font-size:0.85rem;padding:3px 0;line-height:1.7;
+opacity:0;transform:translateY(10px);transition:opacity 0.4s ease,transform 0.4s ease;}
+.ii.visible{opacity:1;transform:translateY(0);}
+.badge{display:inline-block;background:var(--accent);color:var(--bg);border-radius:4px;
+padding:1px 8px;font-size:0.72rem;font-weight:700;margin-right:6px;
+box-shadow:0 2px 8px rgba(96,165,250,0.3);}
+
+/* Insight item class for animation */
+.insight-item{opacity:0;transform:translateY(10px);transition:opacity 0.4s ease,transform 0.4s ease;}
+.insight-item.visible{opacity:1;transform:translateY(0);}
+
+/* Footer */
+.foot{text-align:center;padding:2rem;color:var(--dim);font-size:0.78rem;
+border-top:1px solid var(--border);margin-top:2rem;position:relative;z-index:1;}
+
+/* Animations */
+@keyframes fadeInUp{
+from{opacity:0;transform:translateY(20px);}
+to{opacity:1;transform:translateY(0);}
+}
+
+/* Glow pulse for KPI */
+@keyframes glowPulse{
+0%,100%{text-shadow:0 0 20px rgba(96,165,250,0.3);}
+50%{text-shadow:0 0 30px rgba(96,165,250,0.5),0 0 40px rgba(167,139,250,0.2);}
+}
+.kpi .val{animation:glowPulse 3s ease infinite;}
+
+@media(max-width:768px){
+.nav{flex-direction:column;height:auto;padding:8px 1rem;}
+.main{padding:1rem;}
+.sec{padding:1.2rem;}
+.charts{grid-template-columns:1fr;}
+.kpi-grid{grid-template-columns:repeat(2,1fr);}
+.stats{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<canvas id="particles-canvas"></canvas>
+
+
+<header class="nav">
+<div class="logo">SWRCH22A · 数据分析报告</div>
+<nav>
+<a href="#s1">力学性能</a><a href="#s2">化学成分</a><a href="#s3">加热工艺</a>
+<a href="#s4">轧制工艺</a><a href="#s5">相关性</a><a href="#s6">散点</a>
+<a href="#s7">命中率</a><a href="#s8">熔炼号</a><a href="#s9">尺寸</a><a href="#s10">洞察</a>
+</nav>
+</header>
+
+<main class="main">
+
+<!-- KPI -->
+<div class="kpi-grid">
+<div class="kpi"><div class="icon">📊</div><div class="val">50</div><div class="lbl">检验样本</div></div>
+<div class="kpi"><div class="icon">🔥</div><div class="val">910</div><div class="lbl">加热记录</div></div>
+<div class="kpi"><div class="icon">⚙️</div><div class="val">881</div><div class="lbl">轧制记录</div></div>
+<div class="kpi"><div class="icon">🧪</div><div class="val">9</div><div class="lbl">熔炼号</div></div>
+<div class="kpi"><div class="icon">✅</div><div class="val">100.0%</div><div class="lbl">力学合格率</div></div>
+<div class="kpi"><div class="icon">🎯</div><div class="val">99.64%</div><div class="lbl">A级命中率均值</div></div>
+</div>
+
+<!-- S1: 力学性能 -->
+<section id="s1" class="sec">
+<h2 class="sec-title"><span class="ic">💪</span>力学性能分析</h2>
+<div class="stats">
+<div class="stat"><div class="lbl">屈服强度 (MPa)</div>
+<div class="row"><span>均值</span><span class="v">302.0</span></div>
+<div class="row"><span>范围</span><span class="v">286 ~ 325</span></div>
+<div class="row"><span>标准差</span><span class="v">9.03</span></div></div>
+<div class="stat"><div class="lbl">抗拉强度 (MPa)</div>
+<div class="row"><span>均值</span><span class="v">478.8</span></div>
+<div class="row"><span>范围</span><span class="v">461 ~ 500</span></div>
+<div class="row"><span>标准差</span><span class="v">8.33</span></div></div>
+<div class="stat"><div class="lbl">断后伸长率 (%)</div>
+<div class="row"><span>均值</span><span class="v">37.0</span></div>
+<div class="row"><span>范围</span><span class="v">35.0 ~ 40.5</span></div>
+<div class="row"><span>标准差</span><span class="v">1.36</span></div></div>
+<div class="stat"><div class="lbl">屈强比</div>
+<div class="row"><span>均值</span><span class="v">0.63</span></div>
+<div class="row"><span>范围</span><span class="v">0.59 ~ 0.67</span></div>
+<div class="row"><span>标准差</span><span class="v">0.02</span></div></div>
+<div class="stat"><div class="lbl">断缩率 (%)</div>
+<div class="row"><span>均值</span><span class="v">64.9</span></div>
+<div class="row"><span>范围</span><span class="v">60 ~ 70</span></div>
+<div class="row"><span>标准差</span><span class="v">2.19</span></div></div>
+</div>
+<div class="charts">
+<div class="chart"><h3>力学性能 Min / Mean / Max</h3><canvas id="c1"></canvas></div>
+<div class="chart"><h3>屈强比分布直方图</h3><canvas id="c2"></canvas></div>
+</div>
+</section>
+
+<!-- S2: 化学成分 -->
+<section id="s2" class="sec">
+<h2 class="sec-title"><span class="ic">🧪</span>化学成分分析</h2>
+<div class="stats">
+<div class="stat"><div class="lbl">C (碳)</div>
+<div class="row"><span>均值</span><span class="v">0.1994</span></div>
+<div class="row"><span>范围</span><span class="v">0.1924 ~ 0.2034</span></div></div>
+<div class="stat"><div class="lbl">Mn (锰)</div>
+<div class="row"><span>均值</span><span class="v">0.7544</span></div>
+<div class="row"><span>范围</span><span class="v">0.7324 ~ 0.7977</span></div></div>
+<div class="stat"><div class="lbl">Si (硅)</div>
+<div class="row"><span>均值</span><span class="v">0.0307</span></div>
+<div class="row"><span>范围</span><span class="v">0.0253 ~ 0.0351</span></div></div>
+<div class="stat"><div class="lbl">P (磷)</div>
+<div class="row"><span>均值</span><span class="v">0.0123</span></div>
+<div class="row"><span>范围</span><span class="v">0.0108 ~ 0.0146</span></div></div>
+<div class="stat"><div class="lbl">S (硫)</div>
+<div class="row"><span>均值</span><span class="v">0.0036</span></div>
+<div class="row"><span>范围</span><span class="v">0.0026 ~ 0.0051</span></div></div>
+<div class="stat"><div class="lbl">Al (铝)</div>
+<div class="row"><span>均值</span><span class="v">0.0276</span></div>
+<div class="row"><span>范围</span><span class="v">0.0237 ~ 0.0345</span></div></div>
+</div>
+<div class="charts">
+<div class="chart"><h3>主要成分均值雷达图</h3><canvas id="c3"></canvas></div>
+<div class="chart"><h3>成分均值与标准差</h3><canvas id="c4"></canvas></div>
+</div>
+</section>
+
+<!-- S3: 加热工艺 -->
+<section id="s3" class="sec">
+<h2 class="sec-title"><span class="ic">🔥</span>加热工艺分析</h2>
+<div class="stats">
+<div class="stat"><div class="lbl">预热段 (°C)</div>
+<div class="row"><span>均值</span><span class="v">711.9</span></div>
+<div class="row"><span>范围</span><span class="v">587 ~ 792</span></div></div>
+<div class="stat"><div class="lbl">加热段 (°C)</div>
+<div class="row"><span>均值</span><span class="v">1048.7</span></div>
+<div class="row"><span>范围</span><span class="v">0 ~ 1085</span></div></div>
+<div class="stat"><div class="lbl">均热温度 (°C)</div>
+<div class="row"><span>均值</span><span class="v">1061.6</span></div>
+<div class="row"><span>范围</span><span class="v">0 ~ 1087</span></div></div>
+<div class="stat"><div class="lbl">出炉温度 (°C)</div>
+<div class="row"><span>均值</span><span class="v">974.2</span></div>
+<div class="row"><span>范围</span><span class="v">0 ~ 1011</span></div></div>
+<div class="stat"><div class="lbl">加热时间 (min)</div>
+<div class="row"><span>均值</span><span class="v">166.0</span></div>
+<div class="row"><span>范围</span><span class="v">127.5 ~ 212.6</span></div></div>
+</div>
+<div class="charts">
+<div class="chart full"><h3>各段温度 Min / Mean / Max 对比</h3><canvas id="c5"></canvas></div>
+</div>
+</section>
+
+<!-- S4: 轧制工艺 -->
+<section id="s4" class="sec">
+<h2 class="sec-title"><span class="ic">⚙️</span>轧制工艺分析</h2>
+<div class="stats">
+<div class="stat"><div class="lbl">开轧温度 (°C)</div>
+<div class="row"><span>均值</span><span class="v">974.3</span></div>
+<div class="row"><span>范围</span><span class="v">0 ~ 1011</span></div></div>
+<div class="stat"><div class="lbl">终轧温度 (°C)</div>
+<div class="row"><span>均值</span><span class="v">853.5</span></div>
+<div class="row"><span>范围</span><span class="v">0 ~ 902</span></div></div>
+<div class="stat"><div class="lbl">吐丝温度 (°C)</div>
+<div class="row"><span>均值</span><span class="v">872.5</span></div>
+<div class="row"><span>范围</span><span class="v">0 ~ 923</span></div></div>
+<div class="stat"><div class="lbl">A级命中率 (%)</div>
+<div class="row"><span>均值</span><span class="v">99.64</span></div>
+<div class="row"><span>范围</span><span class="v">96.28 ~ 100.00</span></div></div>
+</div>
+<div class="charts">
+<div class="chart"><h3>轧制温度时序折线图</h3><canvas id="c6"></canvas></div>
+<div class="chart"><h3>班次产量与温度</h3><canvas id="c7"></canvas></div>
+</div>
+<div class="tbl-wrap"><h3>班次汇总</h3>
+<table><thead><tr><th>班次</th><th>记录数</th><th>均温°C</th><th>最低°C</th><th>最高°C</th></tr></thead>
+<tbody><tr><td>中班</td><td>429</td><td>978.5</td><td>955</td><td>1011</td></tr>
+<tr><td>夜班</td><td>246</td><td>981.0</td><td>956</td><td>1006</td></tr>
+<tr><td>白班</td><td>234</td><td>975.9</td><td>959</td><td>1005</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- S5: 相关性 -->
+<section id="s5" class="sec">
+<h2 class="sec-title"><span class="ic">🔗</span>相关性分析</h2>
+<div class="charts">
+<div class="chart full"><h3>成分-力学性能相关系数（按绝对值排序）</h3><canvas id="c8"></canvas></div>
+</div>
+</section>
+
+<!-- S6: 散点 -->
+<section id="s6" class="sec">
+<h2 class="sec-title"><span class="ic">📈</span>散点分析</h2>
+<div class="charts">
+<div class="chart"><h3>C含量 vs 屈服强度</h3><canvas id="c9"></canvas></div>
+<div class="chart"><h3>Mn含量 vs 断后伸长率</h3><canvas id="c10"></canvas></div>
+</div>
+</section>
+
+<!-- S7: 命中率 -->
+<section id="s7" class="sec">
+<h2 class="sec-title"><span class="ic">🎯</span>A级命中率分析</h2>
+<div class="stats">
+<div class="stat"><div class="lbl">均值</div><div class="row"><span class="v big">99.64%</span></div></div>
+<div class="stat"><div class="lbl">最低值</div><div class="row"><span class="v big">96.28%</span></div></div>
+<div class="stat"><div class="lbl">100%批次</div><div class="row"><span class="v big">614 / 880</span></div></div>
+<div class="stat"><div class="lbl">100%占比</div><div class="row"><span class="v big">69.8%</span></div></div>
+</div>
+<div class="charts">
+<div class="chart"><h3>命中率分布</h3><canvas id="c11"></canvas></div>
+<div class="chart"><h3>命中率区间</h3><canvas id="c12"></canvas></div>
+</div>
+</section>
+
+<!-- S8: 熔炼号 -->
+<section id="s8" class="sec">
+<h2 class="sec-title"><span class="ic">🏷️</span>熔炼号综合对比</h2>
+<div class="tbl-wrap">
+<table class="scroll-x">
+<thead><tr><th>熔炼号</th><th>C</th><th>Si</th><th>Mn</th><th>S</th><th>屈服MPa</th><th>抗拉MPa</th><th>伸长率%</th><th>均热°C</th><th>终轧°C</th><th>吐丝°C</th><th>A级命中%</th></tr></thead>
+<tbody><tr><td class="mono">26BC04812</td><td>0.1924</td><td>0.0340</td><td>0.7612</td><td>0.0043</td><td>305.0</td><td>481.8</td><td>36.4</td><td>1062.2</td><td>858.6</td><td>876.7</td><td>99.7</td></tr>
+<tr><td class="mono">26BD04863</td><td>0.2034</td><td>0.0351</td><td>0.7977</td><td>0.0035</td><td>305.3</td><td>480.2</td><td>36.0</td><td>1055.8</td><td>845.5</td><td>874.1</td><td>99.5</td></tr>
+<tr><td class="mono">26BD04866</td><td>0.1979</td><td>0.0301</td><td>0.7622</td><td>0.0026</td><td>300.8</td><td>477.8</td><td>36.2</td><td>1060.2</td><td>861.3</td><td>879.6</td><td>99.7</td></tr>
+<tr><td class="mono">26BD04867</td><td>0.1952</td><td>0.0351</td><td>0.7416</td><td>0.0051</td><td>296.7</td><td>474.0</td><td>38.0</td><td>1071.3</td><td>859.3</td><td>877.1</td><td>99.6</td></tr>
+<tr><td class="mono">26BD04868</td><td>0.2012</td><td>0.0322</td><td>0.7445</td><td>0.0032</td><td>305.2</td><td>487.5</td><td>37.7</td><td>1044.1</td><td>862.8</td><td>880.7</td><td>99.8</td></tr>
+<tr><td class="mono">26BD04869</td><td>0.2029</td><td>0.0277</td><td>0.7324</td><td>0.0035</td><td>300.5</td><td>477.9</td><td>37.4</td><td>1050.7</td><td>855.9</td><td>874.0</td><td>99.6</td></tr>
+<tr><td class="mono">26BD04870</td><td>0.1988</td><td>0.0253</td><td>0.7610</td><td>0.0034</td><td>301.7</td><td>474.7</td><td>37.4</td><td>1070.6</td><td>829.6</td><td>846.7</td><td>99.7</td></tr>
+<tr><td class="mono">26BD04872</td><td>0.1953</td><td>0.0328</td><td>0.7379</td><td>0.0032</td><td>297.8</td><td>475.5</td><td>36.1</td><td>1070.7</td><td>854.7</td><td>873.1</td><td>99.7</td></tr>
+<tr><td class="mono">26BD04873</td><td>0.2025</td><td>0.0265</td><td>0.7582</td><td>0.0031</td><td>304.8</td><td>479.5</td><td>36.6</td><td>1071.4</td><td>861.5</td><td>879.6</td><td>99.7</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<!-- S9: 尺寸 -->
+<section id="s9" class="sec">
+<h2 class="sec-title"><span class="ic">📐</span>尺寸检验</h2>
+<div class="stats">
+<div class="stat"><div class="lbl">外径 (mm)</div>
+<div class="row"><span>均值</span><span class="v">6.54</span></div>
+<div class="row"><span>范围</span><span class="v">6.42 ~ 6.66</span></div>
+<div class="row"><span>样本</span><span class="v">94</span></div></div>
+<div class="stat"><div class="lbl">椭圆度 (mm)</div>
+<div class="row"><span>均值</span><span class="v">0.17</span></div>
+<div class="row"><span>范围</span><span class="v">0.08 ~ 0.24</span></div>
+<div class="row"><span>样本</span><span class="v">47</span></div></div>
+<div class="stat"><div class="lbl">尺寸合格率</div><div class="row"><span class="v big">100.0%</span></div></div>
+<div class="stat"><div class="lbl">检验样本</div><div class="row"><span class="v big">47</span></div></div>
+</div>
+</section>
+
+<!-- S10: 洞察 -->
+<section id="s10" class="sec insights">
+<h2 class="sec-title"><span class="ic">💡</span>智能洞察</h2>
+<h3>🔍 关键发现</h3>
+<div class="ib">
+<h4>1. 成分-性能关联 Top 3</h4>
+<div class="insight-item"><span class="badge">#1</span> <b>P-抗拉强度</b>: r = 0.3820 (强正相关)</div>
+<div class="insight-item"><span class="badge">#2</span> <b>Mn-断后伸长率</b>: r = -0.3269 (强负相关)</div>
+<div class="insight-item"><span class="badge">#3</span> <b>P-屈服强度</b>: r = 0.2499 (中等正相关)</div>
+
+</div>
+<div class="ib">
+<h4>2. 工艺稳定性</h4>
+<div class="ii">• 屈强比均值 <b>0.63</b>，标准差仅 <b>0.02</b>，工艺控制稳定</div>
+<div class="ii">• A级命中率100%批次占比 <b>69.8%</b>，命中精度优秀</div>
+<div class="ii">• 均热温度均值 <b>1061.6°C</b>，波动标准差 <b>71.8°C</b></div>
+</div>
+<div class="ib">
+<h4>3. 质量总评</h4>
+<div class="ii">• 力学性能合格率 <b>100.0%</b>，尺寸合格率 <b>100.0%</b></div>
+<div class="ii">• 化学成分波动小（C标准差 0.0036），成分控制精准</div>
+<div class="ii">• 断后伸长率均值 <b>37.0%</b>，塑性良好</div>
+</div>
+</section>
+
+</main>
+
+<footer class="foot">SWRCH22A 数据分析报告 · 自动生成 · 50 样本 · 9 熔炼号</footer>
+
+
+<script>
+
+// Scroll-triggered Chart Initialization System
+var _chartInited = {};
+function initChartOnScroll(canvasId, factory) {
+  var el = document.getElementById(canvasId);
+  if (!el) return;
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting && !_chartInited[canvasId]) {
+        _chartInited[canvasId] = true;
+        observer.unobserve(el);
+        factory();
+      }
+    });
+  }, { threshold: 0.15 });
+  observer.observe(el);
+}
+
+Chart.defaults.color='#94a3b8';
+Chart.defaults.borderColor='rgba(255,255,255,0.06)';
+
+// C1: Mech bar
+initChartOnScroll('c1', function(){
+new Chart(document.getElementById('c1'),{type:'bar',data:{labels:["屈服强度", "抗拉强度", "断后伸长率", "断面收缩率"],
+datasets:[{label:'Min',data:[286.0, 461.0, 35.0, 60.0],backgroundColor:'rgba(248,113,113,0.7)',borderRadius:4},
+{label:'Mean',data:[302.0, 478.8, 37.0, 64.9],backgroundColor:'rgba(96,165,250,0.7)',borderRadius:4},
+{label:'Max',data:[325.0, 500.0, 40.5, 70.0],backgroundColor:'rgba(52,211,153,0.7)',borderRadius:4}]},
+options:{responsive:true,plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:false}},animation:{duration:1200,easing:'easeOutQuart',delay:function(ctx){return ctx.type==='data'?ctx.dataIndex*100:0;}}}});
+});
+
+// C2: YS histogram
+initChartOnScroll('c2', function(){
+new Chart(document.getElementById('c2'),{type:'bar',data:{labels:["0.59", "0.60", "0.61", "0.62", "0.63", "0.64", "0.65", "0.66", "0.67"],
+datasets:[{label:'频次',data:[1, 1, 8, 8, 11, 13, 5, 2, 1],
+backgroundColor:function(c){var g=c.chart.ctx.createLinearGradient(0,0,0,300);
+g.addColorStop(0,'rgba(167,139,250,0.8)');g.addColorStop(1,'rgba(96,165,250,0.3)');return g;},
+borderRadius:6}]},options:{responsive:true,plugins:{legend:{display:false}},
+scales:{y:{beginAtZero:true,title:{display:true,text:'频次'}},x:{title:{display:true,text:'屈强比'}}},animation:{duration:1200,easing:'easeOutQuart',delay:function(ctx){return ctx.type==='data'?ctx.dataIndex*100:0;}}}});
+});
+
+// C3: Radar
+initChartOnScroll('c3', function(){
+new Chart(document.getElementById('c3'),{type:'radar',data:{labels:["C", "Si", "Mn", "P", "S", "Cr", "Cu", "Ni", "Al"],
+datasets:[{label:'均值',data:[0.1994, 0.0307, 0.7544, 0.0123, 0.0036, 0.03, 0.011, 0.0113, 0.0276],borderColor:'rgba(96,165,250,0.8)',
+backgroundColor:'rgba(96,165,250,0.15)',pointBackgroundColor:'rgba(96,165,250,1)',pointRadius:4}]},
+options:{responsive:true,animation:{duration:1500,easing:'easeOutQuart'},scales:{r:{angleLines:{color:'rgba(255,255,255,0.1)'},
+grid:{color:'rgba(255,255,255,0.08)'},pointLabels:{color:'#94a3b8',font:{size:12}},
+ticks:{display:false}}}}});
+});
+
+// C4: Chem bar horizontal
+initChartOnScroll('c4', function(){
+new Chart(document.getElementById('c4'),{type:'bar',data:{labels:["C", "Si", "Mn", "P", "S", "Cr", "Cu", "Ni", "Al"],
+datasets:[{label:'均值',data:[0.1994, 0.0307, 0.7544, 0.0123, 0.0036, 0.03, 0.011, 0.0113, 0.0276],backgroundColor:'rgba(96,165,250,0.7)',borderRadius:4},
+{label:'标准差',data:[0.0036, 0.0036, 0.0193, 0.0011, 0.0007, 0.0041, 0.0008, 0.0008, 0.0032],backgroundColor:'rgba(251,191,36,0.5)',borderRadius:4}]},
+options:{responsive:true,indexAxis:'y',plugins:{legend:{position:'top'}},animation:{duration:1200,easing:'easeOutQuart',delay:function(ctx){return ctx.type==='data'?ctx.dataIndex*100:0;}}}});
+});
+
+// C5: Heat
+initChartOnScroll('c5', function(){
+new Chart(document.getElementById('c5'),{type:'bar',data:{labels:["预热段", "加热段", "均热段", "出炉", "入炉"],
+datasets:[{label:'Min',data:[587.0, 0.0, 0.0, 0.0, 0.0],backgroundColor:'rgba(248,113,113,0.6)',borderRadius:4},
+{label:'Mean',data:[711.9, 1048.7, 1061.6, 974.2, 162.8],backgroundColor:'rgba(96,165,250,0.7)',borderRadius:4},
+{label:'Max',data:[792.0, 1085.0, 1087.0, 1011.0, 314.0],backgroundColor:'rgba(52,211,153,0.7)',borderRadius:4}]},
+options:{responsive:true,plugins:{legend:{position:'top'}},scales:{y:{title:{display:true,text:'°C'}}},animation:{duration:1200,easing:'easeOutQuart',delay:function(ctx){return ctx.type==='data'?ctx.dataIndex*100:0;}}}});
+});
+
+// C6: Roll time series
+initChartOnScroll('c6', function(){
+(function(){
+var L=["05-29 18:25", "05-29 18:33", "05-29 18:40", "05-29 18:46", "05-29 19:12", "05-29 19:20", "05-29 19:26", "05-29 19:32", "05-29 19:39", "05-29 20:20", "05-29 20:30", "05-29 20:37", "05-29 20:43", "05-29 20:50", "05-29 20:57", "05-29 21:03", "05-29 21:09", "05-29 21:16", "05-29 21:22", "05-29 21:29", "05-29 21:36", "05-29 21:43", "05-29 21:49", "05-29 21:56", "05-29 22:02", "05-29 22:08", "05-29 22:15", "05-29 22:21", "05-29 22:27", "05-29 22:34", "05-29 22:40", "05-29 22:46", "05-29 22:53", "05-29 22:59", "05-29 23:06", "05-29 23:12", "05-29 23:18", "05-29 23:25", "05-29 23:31", "05-29 23:38", "05-29 23:44", "05-29 23:50", "05-29 23:57", "05-30 00:05", "05-30 00:11", "05-30 01:09", "05-30 01:18", "05-30 01:27", "05-30 01:36", "05-30 01:45", "05-30 01:54", "05-30 02:03", "05-30 02:10", "05-30 02:17", "05-30 02:24", "05-30 02:30", "05-30 02:38", "05-30 02:45", "05-30 02:51", "05-30 02:57", "05-30 03:04", "05-30 03:11", "05-30 03:17", "05-30 03:23", "05-30 03:30", "05-30 03:37", "05-30 03:44", "05-30 03:50", "05-30 03:57", "05-30 04:37", "05-30 04:46", "05-30 04:55", "05-30 05:04", "05-30 05:13", "05-30 05:21", "05-30 05:27", "05-30 05:33", "05-30 05:40", "05-30 05:46", "05-30 05:52", "05-30 05:58", "05-30 06:05", "05-30 06:11", "05-30 06:17", "05-30 06:24", "05-30 06:30", "05-30 06:36", "05-30 06:43", "05-30 06:49", "05-30 06:55", "05-30 07:01", "05-30 07:08", "05-30 07:14", "05-30 07:20", "05-30 07:27", "05-30 07:33", "05-30 07:39", "05-30 07:46", "05-30 07:52", "05-30 07:58", "05-30 08:10", "05-30 09:02", "05-30 09:10", "05-30 09:16", "05-30 09:23", "05-30 09:29", "05-30 09:35", "05-30 09:41", "05-30 09:47", "05-30 09:54", "05-30 10:00", "05-30 10:06", "05-30 10:12", "05-30 10:18", "05-30 10:25", "05-30 10:31", "05-30 10:37", "05-30 10:43", "05-30 10:49", "05-30 10:56", "05-30 11:02", "05-30 11:08", "05-30 11:57", "05-30 12:06", "05-30 12:12", "05-30 12:18", "05-30 12:24", "05-30 12:30", "05-30 12:36", "05-30 12:43", "05-30 12:49", "05-30 12:55", "05-30 13:01", "05-30 13:07", "05-30 13:13", "05-30 13:20", "05-30 13:26", "05-30 13:32", "05-30 13:38", "05-30 13:44", "05-30 13:50", "05-30 13:55", "05-30 14:01", "05-30 14:11", "05-30 14:18", "05-30 14:25", "05-30 14:31", "05-30 14:37", "05-30 14:43", "05-30 14:49", "05-30 14:55", "05-30 15:02", "05-30 15:08", "05-30 15:16", "05-30 15:22", "05-30 15:28", "05-30 15:35", "05-30 15:41", "05-30 16:05", "05-30 16:12", "05-30 16:18", "05-30 16:24", "05-30 16:32", "05-30 16:38", "05-30 16:44", "05-30 16:50", "05-30 16:57", "05-30 17:03", "05-30 17:09", "05-30 17:15", "05-30 17:21", "05-30 17:27", "05-30 17:34", "05-30 17:40", "05-30 17:46", "05-30 17:52", "05-30 17:58", "05-30 18:04", "05-30 18:11", "05-30 18:17", "05-30 18:23", "05-30 18:29", "05-30 18:35", "05-30 18:42", "05-30 18:48", "05-30 18:54", "05-30 19:00", "05-30 19:06", "05-30 19:47", "05-30 19:59", "05-30 20:07", "05-30 20:22", "05-30 20:28", "05-30 20:34", "05-30 20:41", "05-30 20:47", "05-30 20:53", "05-30 20:59", "05-30 21:05", "05-30 21:11", "05-30 21:18", "05-30 21:24", "05-30 21:30", "05-30 21:36", "05-30 21:43", "05-30 21:49", "05-30 21:55", "05-30 22:01", "05-30 22:09", "05-30 23:06", "05-30 23:12", "05-30 23:19", "05-30 23:25", "05-30 23:43", "05-30 23:49", "05-30 23:55", "05-31 00:02", "05-31 00:09", "05-31 00:15", "05-31 00:21", "05-31 00:27"];var O=[972.0, 986.0, 993.0, 989.0, 969.0, 974.0, 978.0, 976.0, 975.0, 981.0, 978.0, 972.0, 973.0, 963.0, 957.0, 964.0, 963.0, 969.0, 972.0, 973.0, 968.0, 977.0, 976.0, 970.0, 983.0, 980.0, 978.0, 978.0, 977.0, 975.0, 969.0, 971.0, 968.0, 966.0, 976.0, 1006.0, 997.0, 966.0, 997.0, 1001.0, 992.0, 995.0, 997.0, 1004.0, 985.0, 998.0, 987.0, 992.0, 970.0, 956.0, 957.0, 977.0, 981.0, 988.0, 978.0, 996.0, 981.0, 980.0, 983.0, 983.0, 982.0, 973.0, 978.0, 981.0, 975.0, 996.0, 980.0, 991.0, 1006.0, 990.0, 996.0, 974.0, 977.0, 986.0, 974.0, 976.0, 973.0, 978.0, 977.0, 983.0, 994.0, 975.0, 978.0, 979.0, 985.0, 977.0, 981.0, 968.0, 981.0, 974.0, 975.0, 980.0, 983.0, 973.0, 989.0, 987.0, 991.0, 990.0, 979.0, 981.0, 0.0, 999.0, 986.0, 1005.0, 975.0, 980.0, 977.0, 966.0, 972.0, 968.0, 972.0, 973.0, 976.0, 974.0, 969.0, 970.0, 973.0, 971.0, 973.0, 979.0, 987.0, 983.0, 1002.0, 997.0, 986.0, 983.0, 986.0, 977.0, 972.0, 970.0, 971.0, 972.0, 967.0, 971.0, 974.0, 971.0, 959.0, 972.0, 969.0, 974.0, 965.0, 975.0, 969.0, 974.0, 969.0, 974.0, 973.0, 968.0, 973.0, 974.0, 976.0, 979.0, 976.0, 973.0, 972.0, 974.0, 971.0, 976.0, 978.0, 984.0, 1007.0, 986.0, 968.0, 967.0, 968.0, 973.0, 971.0, 981.0, 974.0, 989.0, 986.0, 987.0, 974.0, 978.0, 975.0, 970.0, 982.0, 975.0, 989.0, 975.0, 974.0, 975.0, 964.0, 975.0, 975.0, 972.0, 976.0, 970.0, 981.0, 993.0, 995.0, 970.0, 962.0, 962.0, 964.0, 977.0, 1011.0, 999.0, 987.0, 988.0, 981.0, 983.0, 983.0, 977.0, 1009.0, 989.0, 972.0, 975.0, 962.0, 986.0, 977.0, 978.0, 980.0, 980.0, 987.0, 989.0, 970.0, 979.0, 975.0, 975.0, 957.0];var F=[847.0, 855.0, 851.0, 860.0, 851.0, 853.0, 861.0, 861.0, 859.0, 870.0, 860.0, 856.0, 849.0, 869.0, 865.0, 865.0, 869.0, 857.0, 863.0, 862.0, 861.0, 867.0, 859.0, 847.0, 853.0, 854.0, 849.0, 842.0, 846.0, 854.0, 845.0, 859.0, 861.0, 858.0, 856.0, 867.0, 853.0, 846.0, 860.0, 857.0, 861.0, 867.0, 859.0, 857.0, 855.0, 840.0, 853.0, 853.0, 851.0, 850.0, 854.0, 862.0, 879.0, 877.0, 877.0, 871.0, 870.0, 854.0, 873.0, 874.0, 868.0, 866.0, 868.0, 855.0, 872.0, 863.0, 868.0, 869.0, 866.0, 866.0, 865.0, 856.0, 857.0, 854.0, 855.0, 854.0, 857.0, 854.0, 855.0, 854.0, 853.0, 853.0, 856.0, 853.0, 857.0, 854.0, 854.0, 852.0, 854.0, 854.0, 855.0, 855.0, 852.0, 854.0, 852.0, 856.0, 855.0, 854.0, 857.0, 855.0, 0.0, 848.0, 862.0, 856.0, 861.0, 858.0, 861.0, 857.0, 868.0, 861.0, 868.0, 857.0, 864.0, 858.0, 855.0, 845.0, 848.0, 853.0, 845.0, 848.0, 850.0, 846.0, 849.0, 853.0, 854.0, 860.0, 859.0, 865.0, 865.0, 865.0, 870.0, 870.0, 873.0, 867.0, 866.0, 860.0, 859.0, 861.0, 862.0, 870.0, 853.0, 849.0, 860.0, 857.0, 857.0, 854.0, 857.0, 856.0, 855.0, 856.0, 853.0, 853.0, 855.0, 851.0, 852.0, 859.0, 857.0, 861.0, 856.0, 859.0, 856.0, 850.0, 850.0, 847.0, 869.0, 870.0, 869.0, 876.0, 860.0, 859.0, 857.0, 861.0, 859.0, 859.0, 863.0, 865.0, 861.0, 864.0, 863.0, 863.0, 863.0, 860.0, 859.0, 858.0, 862.0, 853.0, 855.0, 857.0, 843.0, 862.0, 858.0, 854.0, 851.0, 862.0, 871.0, 858.0, 859.0, 850.0, 855.0, 852.0, 849.0, 851.0, 864.0, 863.0, 868.0, 864.0, 858.0, 857.0, 859.0, 854.0, 856.0, 856.0, 863.0, 862.0, 858.0, 863.0, 857.0, 859.0, 854.0, 857.0, 851.0];var Y=[864.0, 872.0, 867.0, 875.0, 867.0, 871.0, 878.0, 878.0, 876.0, 888.0, 877.0, 873.0, 866.0, 887.0, 882.0, 886.0, 889.0, 877.0, 882.0, 881.0, 880.0, 877.0, 879.0, 867.0, 871.0, 873.0, 868.0, 860.0, 863.0, 871.0, 864.0, 878.0, 879.0, 879.0, 875.0, 887.0, 885.0, 864.0, 879.0, 875.0, 881.0, 887.0, 877.0, 875.0, 873.0, 857.0, 871.0, 870.0, 867.0, 867.0, 871.0, 880.0, 897.0, 895.0, 896.0, 888.0, 887.0, 871.0, 890.0, 891.0, 886.0, 883.0, 885.0, 872.0, 889.0, 879.0, 886.0, 885.0, 884.0, 885.0, 883.0, 874.0, 874.0, 873.0, 873.0, 873.0, 876.0, 873.0, 873.0, 872.0, 872.0, 871.0, 874.0, 871.0, 873.0, 872.0, 872.0, 871.0, 873.0, 872.0, 872.0, 870.0, 869.0, 871.0, 870.0, 872.0, 872.0, 871.0, 874.0, 872.0, 0.0, 867.0, 880.0, 875.0, 880.0, 876.0, 878.0, 875.0, 886.0, 879.0, 886.0, 876.0, 883.0, 876.0, 872.0, 863.0, 865.0, 869.0, 864.0, 864.0, 868.0, 863.0, 865.0, 870.0, 873.0, 879.0, 877.0, 883.0, 883.0, 884.0, 888.0, 890.0, 891.0, 884.0, 884.0, 878.0, 877.0, 878.0, 880.0, 889.0, 871.0, 867.0, 879.0, 875.0, 875.0, 872.0, 874.0, 873.0, 872.0, 873.0, 871.0, 876.0, 869.0, 868.0, 868.0, 877.0, 875.0, 878.0, 874.0, 877.0, 873.0, 868.0, 868.0, 865.0, 885.0, 887.0, 887.0, 894.0, 879.0, 878.0, 877.0, 880.0, 879.0, 879.0, 881.0, 884.0, 879.0, 882.0, 883.0, 882.0, 880.0, 878.0, 876.0, 877.0, 879.0, 870.0, 875.0, 876.0, 863.0, 879.0, 877.0, 872.0, 868.0, 880.0, 890.0, 874.0, 878.0, 867.0, 872.0, 868.0, 867.0, 868.0, 882.0, 881.0, 886.0, 882.0, 876.0, 873.0, 877.0, 872.0, 873.0, 871.0, 881.0, 880.0, 876.0, 882.0, 875.0, 877.0, 873.0, 875.0, 869.0];
+var s=Math.max(1,Math.floor(L.length/60));
+var sL=[],sO=[],sF=[],sY=[];
+for(var i=0;i<L.length;i+=s){sL.push(L[i]);sO.push(O[i]);sF.push(F[i]);sY.push(Y[i]);}
+new Chart(document.getElementById('c6'),{type:'line',data:{labels:sL,datasets:[
+{label:'开轧',data:sO,borderColor:'rgba(248,113,113,0.9)',fill:false,tension:0.3,pointRadius:1},
+{label:'终轧',data:sF,borderColor:'rgba(96,165,250,0.9)',fill:false,tension:0.3,pointRadius:1},
+{label:'吐丝',data:sY,borderColor:'rgba(52,211,153,0.9)',fill:false,tension:0.3,pointRadius:1}]},
+options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top'}},
+animation:{duration:2000,easing:'easeOutQuart'},
+scales:{x:{ticks:{maxRotation:45,maxTicksLimit:15}},y:{title:{display:true,text:'°C'}}}}});
+})();
+});
+
+// C7: Shift
+initChartOnScroll('c7', function(){
+new Chart(document.getElementById('c7'),{type:'bar',data:{labels:["中", "夜", "白"],
+datasets:[{label:'记录数',data:[429, 246, 234],backgroundColor:'rgba(96,165,250,0.6)',borderRadius:4,yAxisID:'y'},
+{label:'均温°C',data:[978.5, 981.0, 975.9],type:'line',borderColor:'rgba(251,191,36,0.9)',
+backgroundColor:'rgba(251,191,36,0.2)',pointRadius:5,yAxisID:'y1'}]},
+options:{responsive:true,plugins:{legend:{position:'top'}},
+animation:{duration:1200,easing:'easeOutQuart',delay:function(ctx){return ctx.type==='data'?ctx.dataIndex*100:0;}},
+scales:{y:{position:'left',title:{display:true,text:'记录数'}},
+y1:{position:'right',title:{display:true,text:'°C'},grid:{drawOnChartArea:false}}}}});
+});
+
+// C8: Correlation
+initChartOnScroll('c8', function(){
+(function(){
+var lb=["P-抗拉强度", "Mn-断后伸长率", "P-屈服强度", "S-断后伸长率", "Mn-屈服强度", "Mn-屈强比", "P-断后伸长率", "C-屈服强度", "S-抗拉强度", "C-抗拉强度", "S-屈服强度", "C-屈强比", "Cr-抗拉强度", "Si-抗拉强度", "Cr-屈服强度", "Si-断后伸长率", "Mn-抗拉强度", "Si-屈服强度", "C-断后伸长率"];var vl=[0.382, -0.3269, 0.2499, 0.2388, 0.1985, 0.1848, -0.1582, 0.1558, -0.1549, 0.1514, -0.1451, 0.099, -0.0932, 0.0923, -0.0884, -0.0861, 0.0607, -0.0256, -0.0105];
+var cl=vl.map(function(v){if(v>=0.2)return'rgba(52,211,153,0.8)';if(v<=-0.2)return'rgba(248,113,113,0.8)';
+if(v>=0)return'rgba(96,165,250,0.6)';return'rgba(251,191,36,0.6)';});
+new Chart(document.getElementById('c8'),{type:'bar',data:{labels:lb,
+datasets:[{label:'r',data:vl,backgroundColor:cl,borderRadius:4}]},
+options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false}},
+animation:{duration:1200,easing:'easeOutQuart',delay:function(ctx){return ctx.type==='data'?ctx.dataIndex*100:0;}},
+scales:{x:{min:-0.5,max:0.5,title:{display:true,text:'相关系数 r'}}}}});
+})();
+});
+
+// C9: Scatter C vs YS
+initChartOnScroll('c9', function(){
+new Chart(document.getElementById('c9'),{type:'scatter',data:{datasets:[{label:'C vs 屈服',
+data:[[0.2034, 305.0], [0.2034, 299.0], [0.1924, 305.0], [0.1924, 299.0], [0.1979, 288.0], [0.1979, 307.0], [0.2025, 301.0], [0.2025, 319.0], [0.1988, 299.0], [0.1988, 307.0], [0.1953, 295.0], [0.1953, 292.0], [0.1952, 301.0], [0.1952, 292.0], [0.2012, 305.0], [0.2012, 296.0], [0.2029, 309.0], [0.2029, 291.0], [0.2025, 287.0], [0.2025, 308.0], [0.1953, 291.0], [0.1953, 313.0], [0.1988, 301.0], [0.1988, 301.0], [0.2029, 318.0], [0.2029, 304.0], [0.2029, 286.0], [0.2029, 302.0], [0.2012, 303.0], [0.2012, 293.0], [0.1952, 301.0], [0.1952, 299.0], [0.2012, 314.0], [0.2012, 320.0], [0.1952, 291.0], [0.1952, 296.0], [0.1979, 297.0], [0.1979, 311.0], [0.1924, 307.0], [0.1924, 309.0], [0.2034, 315.0], [0.2034, 325.0], [0.1988, 301.0], [0.1988, 301.0], [0.2025, 316.0], [0.2025, 298.0], [0.2029, 298.0], [0.2029, 296.0], [0.2034, 297.0], [0.2034, 291.0]],backgroundColor:'rgba(96,165,250,0.6)',pointRadius:5,pointHoverRadius:8}]},
+options:{responsive:true,plugins:{legend:{display:false}},
+animation:{duration:1500,easing:'easeOutQuart'},
+scales:{x:{title:{display:true,text:'C (%)'}},y:{title:{display:true,text:'屈服强度 (MPa)'}}}}});
+});
+
+// C10: Scatter Mn vs El
+initChartOnScroll('c10', function(){
+new Chart(document.getElementById('c10'),{type:'scatter',data:{datasets:[{label:'Mn vs 伸长率',
+data:[[0.7977, 35.0], [0.7977, 35.5], [0.7612, 37.0], [0.7612, 36.5], [0.7622, 35.5], [0.7622, 36.0], [0.7582, 37.0], [0.7582, 37.0], [0.761, 36.0], [0.761, 38.0], [0.7379, 36.0], [0.7379, 35.5], [0.7416, 39.5], [0.7416, 39.0], [0.7445, 39.0], [0.7445, 38.5], [0.7324, 37.5], [0.7324, 36.0], [0.7582, 35.5], [0.7582, 37.0], [0.7379, 35.5], [0.7379, 37.5], [0.761, 38.5], [0.761, 38.0], [0.7324, 38.0], [0.7324, 38.5], [0.7324, 40.5], [0.7324, 36.5], [0.7445, 38.0], [0.7445, 39.0], [0.7416, 37.5], [0.7416, 38.5], [0.7445, 35.0], [0.7445, 36.5], [0.7416, 36.5], [0.7416, 37.0], [0.7622, 35.0], [0.7622, 38.5], [0.7612, 36.0], [0.7612, 36.0], [0.7977, 35.0], [0.7977, 37.5], [0.761, 38.0], [0.761, 36.0], [0.7582, 38.0], [0.7582, 35.0], [0.7324, 37.0], [0.7324, 35.5], [0.7977, 37.5], [0.7977, 35.5]],backgroundColor:'rgba(167,139,250,0.6)',pointRadius:5,pointHoverRadius:8}]},
+options:{responsive:true,plugins:{legend:{display:false}},
+animation:{duration:1500,easing:'easeOutQuart'},
+scales:{x:{title:{display:true,text:'Mn (%)'}},y:{title:{display:true,text:'断后伸长率 (%)'}}}}});
+});
+
+// C11: Hit pie
+initChartOnScroll('c11', function(){
+new Chart(document.getElementById('c11'),{type:'doughnut',data:{labels:['100%命中','<100%'],
+datasets:[{data:[614,266],
+backgroundColor:['rgba(52,211,153,0.8)','rgba(248,113,113,0.5)'],borderWidth:0}]},
+options:{responsive:true,cutout:'55%',plugins:{legend:{position:'bottom'}},
+animation:{duration:1500,easing:'easeOutQuart'}}});
+});
+
+// C12: Hit bar
+initChartOnScroll('c12', function(){
+new Chart(document.getElementById('c12'),{type:'bar',data:{labels:["<96", "96-97", "97-98", "98-99", "99-100", "100"],
+datasets:[{label:'批次',data:[0, 2, 12, 207, 45, 614],
+backgroundColor:function(c){var cs=['rgba(248,113,113,0.6)','rgba(251,191,36,0.6)','rgba(96,165,250,0.6)',
+'rgba(167,139,250,0.6)','rgba(52,211,153,0.6)','rgba(52,211,153,0.9)'];
+return cs[c.dataIndex]||'rgba(96,165,250,0.6)';},borderRadius:6}]},
+options:{responsive:true,plugins:{legend:{display:false}},
+animation:{duration:1200,easing:'easeOutQuart',delay:function(ctx){return ctx.type==='data'?ctx.dataIndex*100:0;}},
+scales:{y:{beginAtZero:true,title:{display:true,text:'批次'}},x:{title:{display:true,text:'命中率区间(%)'}}}}});
+});
+
+
+// Particle Animation System
+(function(){
+var canvas=document.getElementById('particles-canvas');
+var ctx=canvas.getContext('2d');
+var particles=[];
+var particleCount=80;
+var maxDist=120;
+var colors=['rgba(96,165,250,','rgba(167,139,250,','rgba(240,171,252,'];
+
+function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
+window.addEventListener('resize',resize);
+resize();
+
+function Particle(){
+this.x=Math.random()*canvas.width;
+this.y=Math.random()*canvas.height;
+this.vx=(Math.random()-0.5)*0.4;
+this.vy=(Math.random()-0.5)*0.4;
+this.r=Math.random()*2+1;
+this.color=colors[Math.floor(Math.random()*colors.length)];
+this.alpha=Math.random()*0.5+0.2;
+}
+Particle.prototype.update=function(){
+this.x+=this.vx;this.y+=this.vy;
+if(this.x<0||this.x>canvas.width)this.vx*=-1;
+if(this.y<0||this.y>canvas.height)this.vy*=-1;
+};
+Particle.prototype.draw=function(){
+ctx.beginPath();
+ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+ctx.fillStyle=this.color+this.alpha+')';
+ctx.fill();
+};
+
+for(var i=0;i<particleCount;i++){particles.push(new Particle());}
+
+function drawLines(){
+for(var i=0;i<particles.length;i++){
+for(var j=i+1;j<particles.length;j++){
+var dx=particles[i].x-particles[j].x;
+var dy=particles[i].y-particles[j].y;
+var dist=Math.sqrt(dx*dx+dy*dy);
+if(dist<maxDist){
+var alpha=(1-dist/maxDist)*0.15;
+ctx.beginPath();
+ctx.moveTo(particles[i].x,particles[i].y);
+ctx.lineTo(particles[j].x,particles[j].y);
+ctx.strokeStyle='rgba(130,160,250,'+alpha+')';
+ctx.lineWidth=0.5;
+ctx.stroke();
+}
+}
+}
+}
+
+function animate(){
+ctx.clearRect(0,0,canvas.width,canvas.height);
+for(var i=0;i<particles.length;i++){particles[i].update();particles[i].draw();}
+drawLines();
+requestAnimationFrame(animate);
+}
+animate();
+})();
+
+
+// KPI CountUp Animation
+(function(){
+var kpis=document.querySelectorAll('.kpi .val');
+var targets=[];
+for(var i=0;i<kpis.length;i++){
+var text=kpis[i].textContent.trim();
+targets.push({el:kpis[i],text:text,num:parseFloat(text.replace(/[^0-9.]/g,'')),
+suffix:text.indexOf('%')>=0?'%':'',isInt:text.indexOf('.')<0&&text.indexOf('%')<0});
+kpis[i].textContent='0'+targets[i].suffix;
+}
+var duration=1500;
+var startTime=null;
+function step(ts){
+if(!startTime)startTime=ts;
+var progress=Math.min((ts-startTime)/duration,1);
+var ease=1-Math.pow(1-progress,3);
+for(var i=0;i<targets.length;i++){
+var t=targets[i];
+var val=t.num*ease;
+if(t.isInt){t.el.textContent=Math.round(val)+t.suffix;}
+else{t.el.textContent=val.toFixed(t.text.split('.')[1]?t.text.split('.')[1].replace(/[^0-9]/g,'').length:1)+t.suffix;}
+if(progress>=1){t.el.textContent=t.text;}
+}
+if(progress<1)requestAnimationFrame(step);
+}
+setTimeout(function(){requestAnimationFrame(step);},400);
+})();
+
+
+// Scroll Animation with Intersection Observer
+(function(){
+var observer=new IntersectionObserver(function(entries){
+entries.forEach(function(entry){
+if(entry.isIntersecting){
+entry.target.classList.add('visible');
+// Animate progress bars inside
+var fills=entry.target.querySelectorAll('.progress-bar .fill');
+for(var i=0;i<fills.length;i++){
+setTimeout((function(f){return function(){f.style.width=f.style.getPropertyValue('--target-width')||'50%';};})(fills[i]),300);
+}
+}
+});
+},{threshold:0.1,rootMargin:'0px 0px -50px 0px'});
+
+// Observe sections
+var secs=document.querySelectorAll('.sec');
+for(var i=0;i<secs.length;i++){observer.observe(secs[i]);}
+
+// Observe charts
+var charts=document.querySelectorAll('.chart');
+for(var i=0;i<charts.length;i++){
+charts[i].style.transitionDelay=(i%2)*0.15+'s';
+observer.observe(charts[i]);
+}
+
+// Observe insight blocks
+var ibs=document.querySelectorAll('.ib');
+for(var i=0;i<ibs.length;i++){
+ibs[i].style.transitionDelay=i*0.2+'s';
+observer.observe(ibs[i]);
+}
+
+// Observe insight items
+var iis=document.querySelectorAll('.ii,.insight-item');
+for(var i=0;i<iis.length;i++){
+iis[i].style.transitionDelay=(i%5)*0.1+'s';
+observer.observe(iis[i]);
+}
+})();
+
+
+// Navigation Scroll Highlight
+(function(){
+var navLinks=document.querySelectorAll('.nav nav a');
+var sections=[];
+for(var i=0;i<navLinks.length;i++){
+var href=navLinks[i].getAttribute('href');
+if(href&&href.charAt(0)==='#'){
+var sec=document.querySelector(href);
+if(sec)sections.push({link:navLinks[i],section:sec});
+}
+}
+function updateNav(){
+var scrollPos=window.scrollY+100;
+var active=null;
+for(var i=0;i<sections.length;i++){
+if(sections[i].section.offsetTop<=scrollPos){active=sections[i];}
+}
+for(var i=0;i<sections.length;i++){sections[i].link.classList.remove('active');}
+if(active)active.link.classList.add('active');
+}
+window.addEventListener('scroll',updateNav);
+updateNav();
+
+// Smooth scroll for nav links
+for(var i=0;i<navLinks.length;i++){
+navLinks[i].addEventListener('click',function(e){
+var href=this.getAttribute('href');
+if(href&&href.charAt(0)==='#'){
+e.preventDefault();
+var target=document.querySelector(href);
+if(target){
+var top=target.offsetTop-70;
+window.scrollTo({top:top,behavior:'smooth'});
+}
+}
+});
+}
+})();
+</script>
+</body>
+</html>

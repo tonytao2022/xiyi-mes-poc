@@ -83,14 +83,24 @@ if FRONTEND_DIST.is_dir():
     def index():
         return FileResponse(FRONTEND_DIST / "index.html")
 
-    # SPA fallback：非 /api 的路径都交给前端路由
+    # SPA fallback：非 /api、非静态资源的路径都交给前端路由
     from fastapi.responses import JSONResponse
 
     @app.exception_handler(404)
     async def spa_fallback(request, exc):
         path = request.url.path
+        # API / 元数据路径 → 真 404
         if path.startswith("/api/") or path in ("/health", "/docs", "/openapi.json", "/redoc"):
             return JSONResponse({"detail": "Not Found"}, status_code=404)
+        # 带扩展名的静态资源不存在 → 真 404（避免把 index.html 当 JS/CSS 返回导致白屏）
+        last_seg = path.rsplit("/", 1)[-1]
+        ext = last_seg.rsplit(".", 1)[-1].lower() if "." in last_seg else ""
+        if ext in ("js", "css", "png", "jpg", "jpeg", "gif", "svg", "ico", "woff", "woff2", "ttf", "map", "webp"):
+            f = FRONTEND_DIST / path.lstrip("/")
+            if not f.is_file():
+                return JSONResponse({"detail": "Not Found"}, status_code=404)
+            return FileResponse(f)
+        # 其他前端路由 → SPA fallback 到 index.html
         f = FRONTEND_DIST / path.lstrip("/")
         if f.is_file():
             return FileResponse(f)

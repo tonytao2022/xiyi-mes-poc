@@ -46,7 +46,7 @@
         <button class="tab" :class="{ active: tab === 'reason' }" @click="tab = 'reason'">
           <Icon name="target" :size="16" /> 根因诊断
         </button>
-        <button class="tab" :class="{ active: tab === 'suggest' }" @click="tab = 'suggest'">
+        <button class="tab" :class="{ active: tab === 'suggest' }" @click="switchSuggestTab()">
           <Icon name="wrench" :size="16" /> 三级建议
         </button>
         <button class="tab" :class="{ active: tab === 'report' }" @click="switchReportTab()">
@@ -110,11 +110,16 @@
           <Icon name="wrench" :size="40" />
           <p>请先运行「AI 智能诊断」生成根因分析，再查看三级整改建议。</p>
         </div>
-        <div v-else-if="!recs.length" class="empty">暂无建议数据</div>
+        <div v-else-if="loadingSuggest" class="loading-state">
+          <div class="spinner"></div>
+          <p>正在基于根因生成三级整改建议（{{ health.model || 'LLM' }}）...</p>
+        </div>
+        <div v-else-if="suggestErr" class="error-state">{{ suggestErr }}</div>
+        <div v-else-if="!recs.length" class="empty">暂无建议数据，请点击右上角「生成建议」重新尝试</div>
         <div v-else class="rec-wrap">
           <div class="rec-group">
             <h4 class="group-title"><span class="g-badge short">短期止血</span>立即整改 · 1-7天</h4>
-            <div v-for="(r, i) in recs.filter(x => (x.level || 'short').includes('short'))" :key="'s' + i" class="rec-card short">
+            <div v-for="(r, i) in recs.filter(x => isUrgent(x.level))" :key="'s' + i" class="rec-card short">
               <div class="rec-action">{{ r.action }}</div>
               <div class="rec-meta">
                 <span v-if="r.target">🎯 {{ r.target }}</span>
@@ -126,7 +131,7 @@
           </div>
           <div class="rec-group">
             <h4 class="group-title"><span class="g-badge mid">中期改善</span>系统优化 · 1-4周</h4>
-            <div v-for="(r, i) in recs.filter(x => (x.level || '').includes('mid'))" :key="'m' + i" class="rec-card mid">
+            <div v-for="(r, i) in recs.filter(x => isShort(x.level))" :key="'m' + i" class="rec-card mid">
               <div class="rec-action">{{ r.action }}</div>
               <div class="rec-meta">
                 <span v-if="r.target">🎯 {{ r.target }}</span>
@@ -138,7 +143,7 @@
           </div>
           <div class="rec-group">
             <h4 class="group-title"><span class="g-badge long">长期治本</span>战略改进 · 1-3月</h4>
-            <div v-for="(r, i) in recs.filter(x => (x.level || '').includes('long'))" :key="'l' + i" class="rec-card long">
+            <div v-for="(r, i) in recs.filter(x => isLong(x.level))" :key="'l' + i" class="rec-card long">
               <div class="rec-action">{{ r.action }}</div>
               <div class="rec-meta">
                 <span v-if="r.target">🎯 {{ r.target }}</span>
@@ -148,7 +153,7 @@
               </div>
             </div>
           </div>
-          <div v-if="!recs.some(x => (x.level || 'short').includes('short'))" class="empty">无短期建议</div>
+          <div v-if="!recs.some(x => isUrgent(x.level))" class="empty">无紧急建议</div>
         </div>
       </div>
 
@@ -220,7 +225,14 @@ const tab = ref('reason')
 const loading = ref(false)
 const rc = ref(null)
 const rcErr = ref('')
-const recs = computed(() => (rc.value && rc.value.recommendations) || [])
+const recs = ref([])
+const loadingSuggest = ref(false)
+const suggestErr = ref('')
+
+// 三级建议与 LLM 输出 level 严格一一对应：urgent → 短期止血 / short → 中期改善 / long → 长期治本
+function isUrgent(lv) { return ['urgent'].includes((lv || '').toLowerCase()) }
+function isShort(lv) { return ['short'].includes((lv || '').toLowerCase()) }
+function isLong(lv) { return ['long'].includes((lv || '').toLowerCase()) }
 const health = ref({ enabled: false, model: '' })
 
 const reportDomain = ref('')
@@ -247,12 +259,36 @@ async function runDiagnosis() {
     // LLM 根因推理较慢(偶发>30s)，单独放宽超时到 180s
     const res = await http.post('/ai/reason', null, { params: { domain: domain.value }, timeout: 180000 })
     rc.value = res
+    // 只在根因接口确实携带了建议时直接复用，否则留空由三级建议 Tab 按需拉取
+    recs.value = (res && res.recommendations) || []
     tab.value = 'reason'
   } catch (e) {
     rcErr.value = '根因分析失败：' + (e?.response?.data?.detail || e.message)
     rc.value = null
+    recs.value = []
   } finally {
     loading.value = false
+  }
+}
+
+async function switchSuggestTab() {
+  tab.value = 'suggest'
+  // 未生成根因：提示先诊断
+  if (!rc.value) return
+  // 已有建议：直接展示，不再重复调用
+  if (recs.value && recs.value.length) return
+  // 按需拉取三级建议：基于已生成的根因，单次 LLM 调用（与 /reason 解耦，避免接口超时翻倍）
+  loadingSuggest.value = true
+  suggestErr.value = ''
+  try {
+    const res = await http.post('/ai/suggestions',
+      { root_causes: (rc.value.root_causes || []) },
+      { params: { domain: domain.value }, timeout: 180000 })
+    recs.value = (res && res.recommendations) || []
+  } catch (e) {
+    suggestErr.value = '三级建议生成失败：' + (e?.response?.data?.detail || e.message)
+  } finally {
+    loadingSuggest.value = false
   }
 }
 

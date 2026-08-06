@@ -1,17 +1,28 @@
 """AI 智体 API：LLM 根因分析 + 报告生成/管理 + 健康探测。"""
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import get_db
 from app.models.ai_report import AiReport
 from app.services.llm_client import LLMClient
-from app.services.llm_analyzer import analyze_root_causes, full_lm_analysis
+from app.services.llm_analyzer import (
+    analyze_root_causes,
+    full_lm_analysis,
+    generate_suggestions,
+)
 from app.services.report_engine import generate_report
 
 router = APIRouter()
 
 _VALID_DOMAINS = {"comprehensive", "quality", "cost", "efficiency"}
+
+
+class SuggestBody(BaseModel):
+    """三级建议请求体：前端可回传已生成的根因，避免后端重复 LLM 推理根因。"""
+    root_causes: Optional[list] = None
 
 
 def _check_domain(domain: str):
@@ -24,6 +35,23 @@ def ai_reason(domain: str = Query("comprehensive"), db: Session = Depends(get_db
     """LLM 根因分析（domain: comprehensive/quality/cost/efficiency）。"""
     _check_domain(domain)
     return analyze_root_causes(db, domain)
+
+
+@router.post("/suggestions")
+def ai_suggestions(body: Optional[SuggestBody] = None, domain: str = Query("comprehensive"),
+                   db: Session = Depends(get_db)):
+    """三级整改建议（基于根因，单次 LLM 调用）。
+
+    前端可传入已生成的 root_causes 复用根因；未传则内部重新推理根因后生成建议。
+    设计意图：避免将三级建议串联进 /reason 造成接口超时翻倍——与本接口解耦、按需获取。
+    """
+    _check_domain(domain)
+    if body is not None and body.root_causes:
+        rc = {"root_causes": body.root_causes}
+    else:
+        rc = analyze_root_causes(db, domain)
+    sug = generate_suggestions(rc)
+    return {"root_causes": rc.get("root_causes", []), "recommendations": sug.get("recommendations", [])}
 
 
 @router.post("/report/generate")
